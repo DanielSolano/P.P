@@ -1,82 +1,96 @@
 #include "raylib.h"
+#include <iostream>
+
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
-#define SNAKE_LENGTH 256
-#define SQUARE_SIZE 46
+#define SQUARE_SIZE 31
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef struct Snake
+typedef struct SnakeSegment
 {
     Vector2 position;
     Vector2 size;
     Vector2 speed;
-    Color color;
-} Snake;
+    Texture2D sprite;
+} SnakeSegment;
+
+typedef struct SnakeNode
+{
+    SnakeSegment segment;
+    struct SnakeNode *next;
+} SnakeNode;
 
 typedef struct Food
 {
     Vector2 position;
     Vector2 size;
     bool active;
-    Color color;
+    Texture2D sprite;
 } Food;
 
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static const int screenWidth = 800;
-static const int screenHeight = 450;
-static const int speed = 15;
+static const int SCREEN_WIDTH = 800;
+static const int SCREEN_HEIGHT = 450;
 
 static int framesCounter = 0;
 static bool gameOver = false;
 static bool pause = false;
 
 static Food fruit = {0};
-static Snake snake[SNAKE_LENGTH] = {0};
-static Vector2 snakePosition[SNAKE_LENGTH] = {0};
-static bool allowMove = false;
+static SnakeNode *snakeHead = NULL;
 static Vector2 offset = {0};
 static int counterTail = 0;
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
-static void InitGame(void);        // Initialize game
-static void UpdateGame(void);      // Update game (one frame)
-static void DrawGame(void);        // Draw game (one frame)
-static void UnloadGame(void);      // Unload game
-static void UpdateDrawFrame(void); // Update and Draw (one frame)
+static void InitGame(void);
+static void UpdateGame(Sound eat);
+static void DrawGame(Music defeat, Sound eat, Music music);
+static void UnloadGame(void);
+static void UpdateDrawFrame(Music defeat, Sound eat, Music music);
+static void AddSegment(void);
+static void FreeSnake(void);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(void)
 {
-    //---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "Viborita");
+
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Culebrita");
+
+    InitAudioDevice();
+
+    Music defeat = LoadMusicStream("..\\sonidos\\derrota.mp3");
+    Sound eat = LoadSound("..\\sonidos\\comer.mp3");
+    Music music = LoadMusicStream("..\\sonidos\\musica_snake.mp3");
+    
+    SetMusicVolume(defeat, 0.1f);
+    SetSoundVolume(eat, 0.5f);
+    SetMusicVolume(music, 0.05f);
+
+    PlayMusicStream(defeat);
+    PlayMusicStream(music);
 
     InitGame();
 
     SetTargetFPS(60);
-    //--------------------------------------------------------------------------------------
 
-    // Main game loop
-    while (!WindowShouldClose()) // Detect window close button or ESC key
+    while (!WindowShouldClose())
     {
-        // Update and Draw
-        //----------------------------------------------------------------------------------
-        UpdateDrawFrame();
-        //----------------------------------------------------------------------------------
+        UpdateDrawFrame(defeat, eat, music);
     }
-    //--------------------------------------------------------------------------------------
-    UnloadGame(); // Unload loaded data (textures, sounds, models...)
 
-    CloseWindow(); // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+
+    UnloadMusicStream(defeat);
+    UnloadGame();
+    CloseWindow();
 
     return 0;
 }
@@ -84,130 +98,123 @@ int main(void)
 //------------------------------------------------------------------------------------
 // Module Functions Definitions (local)
 //------------------------------------------------------------------------------------
-
-// Initialize game variables
-void InitGame(void)
+static void InitGame(void)
 {
     framesCounter = 0;
     gameOver = false;
     pause = false;
 
     counterTail = 1;
-    allowMove = false;
+    offset.x = SCREEN_WIDTH % SQUARE_SIZE;
+    offset.y = SCREEN_HEIGHT % SQUARE_SIZE;
 
-    offset.x = screenWidth % SQUARE_SIZE;
-    offset.y = screenHeight % SQUARE_SIZE;
+    FreeSnake();
 
-    for (int i = 0; i < SNAKE_LENGTH; i++)
-    {
-        snake[i].position = (Vector2){offset.x / 2, offset.y / 2};
-        snake[i].size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
-        snake[i].speed = (Vector2){SQUARE_SIZE, 0};
-
-        if (i == 0)
-            snake[i].color = BLACK; // HEAD ****************************************
-        else
-            snake[i].color = GRAY; // Body ***********************************************
-    }
-
-    for (int i = 0; i < SNAKE_LENGTH; i++)
-    {
-        snakePosition[i] = (Vector2){0.0f, 0.0f};
-    }
+    snakeHead = (SnakeNode *)malloc(sizeof(SnakeNode));
+    snakeHead->segment.position = (Vector2){offset.x / 2, offset.y / 2};
+    snakeHead->segment.size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
+    snakeHead->segment.speed = (Vector2){SQUARE_SIZE, 0};
+    snakeHead->segment.sprite = LoadTexture("C:\\Users\\Mitillo\\Universidad\\4to. Semestre\\P.P\\Practica1\\cualquier\\texturas\\snake-head.png");
+    snakeHead->next = NULL;
 
     fruit.size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
-    fruit.color = SKYBLUE;
+    fruit.sprite = LoadTexture("C:\\Users\\Mitillo\\Universidad\\4to. Semestre\\P.P\\Practica1\\cualquier\\texturas\\fruta.png");
     fruit.active = false;
+    AddSegment();
 }
 
-// Update game (one frame)
-void UpdateGame(void)
+static void UpdateGame(Sound eat)
 {
     if (!gameOver)
     {
         if (IsKeyPressed('P'))
+        {
             pause = !pause;
+        }
 
         if (!pause)
         {
-            // Player control
-            if (IsKeyPressed(KEY_RIGHT) && (snake[0].speed.x == 0) && allowMove)
+            if (IsKeyPressed(KEY_RIGHT) && (snakeHead->segment.speed.x == 0))
             {
-                snake[0].speed = (Vector2){SQUARE_SIZE, 0};
-                allowMove = false;
+                snakeHead->segment.speed = (Vector2){SQUARE_SIZE, 0};
             }
-            if (IsKeyPressed(KEY_LEFT) && (snake[0].speed.x == 0) && allowMove)
+            if (IsKeyPressed(KEY_LEFT) && (snakeHead->segment.speed.x == 0))
             {
-                snake[0].speed = (Vector2){-SQUARE_SIZE, 0};
-                allowMove = false;
+                snakeHead->segment.speed = (Vector2){-SQUARE_SIZE, 0};
             }
-            if (IsKeyPressed(KEY_UP) && (snake[0].speed.y == 0) && allowMove)
+            if (IsKeyPressed(KEY_UP) && (snakeHead->segment.speed.y == 0))
             {
-                snake[0].speed = (Vector2){0, -SQUARE_SIZE};
-                allowMove = false;
+                snakeHead->segment.speed = (Vector2){0, -SQUARE_SIZE};
             }
-            if (IsKeyPressed(KEY_DOWN) && (snake[0].speed.y == 0) && allowMove)
+            if (IsKeyPressed(KEY_DOWN) && (snakeHead->segment.speed.y == 0))
             {
-                snake[0].speed = (Vector2){0, SQUARE_SIZE};
-                allowMove = false;
+                snakeHead->segment.speed = (Vector2){0, SQUARE_SIZE};
             }
-
-            // Snake movement
-            for (int i = 0; i < counterTail; i++)
-                snakePosition[i] = snake[i].position;
 
             if ((framesCounter % 5) == 0)
             {
-                for (int i = 0; i < counterTail; i++)
+                SnakeNode *current = snakeHead;
+                Vector2 previousPosition = current->segment.position;
+                Vector2 tempPosition;
+
+                current->segment.position.x += current->segment.speed.x;
+                current->segment.position.y += current->segment.speed.y;
+
+                while (current->next != NULL)
                 {
-                    if (i == 0)
-                    {
-                        snake[0].position.x += snake[0].speed.x;
-                        snake[0].position.y += snake[0].speed.y;
-                        allowMove = true;
-                    }
-                    else
-                        snake[i].position = snakePosition[i - 1];
+                    current = current->next;
+                    tempPosition = current->segment.position;
+                    current->segment.position = previousPosition;
+                    previousPosition = tempPosition;
                 }
             }
 
-            // Wall behaviour
-            if (((snake[0].position.x) > (screenWidth - offset.x)) ||
-                ((snake[0].position.y) > (screenHeight - offset.y)) ||
-                (snake[0].position.x < 0) || (snake[0].position.y < 0))
+            if ((snakeHead->segment.position.x >= SCREEN_WIDTH - offset.x) ||
+                (snakeHead->segment.position.y >= SCREEN_HEIGHT - offset.y) ||
+                (snakeHead->segment.position.x < 0) || (snakeHead->segment.position.y < 0))
             {
-                gameOver = true; // GAME OVER *****************************************
+                gameOver = true;
             }
 
-            // Collision with yourself
-            for (int i = 1; i < counterTail; i++)
+            SnakeNode *current = snakeHead->next;
+            while (current != NULL)
             {
-                if ((snake[0].position.x == snake[i].position.x) && (snake[0].position.y == snake[i].position.y))
-                    gameOver = true; // GAME OVER *****************************************
+                if ((snakeHead->segment.position.x == current->segment.position.x) &&
+                    (snakeHead->segment.position.y == current->segment.position.y))
+                {
+                    gameOver = true;
+                    break;
+                }
+                current = current->next;
             }
 
-            // Fruit position calculation
             if (!fruit.active)
             {
                 fruit.active = true;
-                fruit.position = (Vector2){GetRandomValue(0, (screenWidth / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.x / 2, GetRandomValue(0, (screenHeight / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.y / 2};
+                fruit.position = (Vector2){GetRandomValue(0, (SCREEN_WIDTH / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.x / 2,
+                                           GetRandomValue(0, (SCREEN_HEIGHT / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.y / 2};
 
-                for (int i = 0; i < counterTail; i++)
+                current = snakeHead;
+                while (current != NULL)
                 {
-                    while ((fruit.position.x == snake[i].position.x) && (fruit.position.y == snake[i].position.y))
+                    while ((fruit.position.x == current->segment.position.x) &&
+                           (fruit.position.y == current->segment.position.y))
                     {
-                        fruit.position = (Vector2){GetRandomValue(0, (screenWidth / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.x / 2, GetRandomValue(0, (screenHeight / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.y / 2};
-                        i = 0;
+                        fruit.position = (Vector2){GetRandomValue(0, (SCREEN_WIDTH / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.x / 2,
+                                                   GetRandomValue(0, (SCREEN_HEIGHT / SQUARE_SIZE) - 1) * SQUARE_SIZE + offset.y / 2};
+                        current = snakeHead;
                     }
+                    current = current->next;
                 }
             }
 
-            // Collision
-            if ((snake[0].position.x < (fruit.position.x + fruit.size.x) && (snake[0].position.x + snake[0].size.x) > fruit.position.x) &&
-                (snake[0].position.y < (fruit.position.y + fruit.size.y) && (snake[0].position.y + snake[0].size.y) > fruit.position.y))
+            if ((snakeHead->segment.position.x < (fruit.position.x + fruit.size.x) &&
+                 (snakeHead->segment.position.x + snakeHead->segment.size.x) > fruit.position.x) &&
+                (snakeHead->segment.position.y < (fruit.position.y + fruit.size.y) &&
+                 (snakeHead->segment.position.y + snakeHead->segment.size.y) > fruit.position.y))
             {
-                snake[counterTail].position = snakePosition[counterTail - 1]; // NEW TAIL SEGMENT ***************************************
-                counterTail += 1;
+                PlaySound(eat);
+                AddSegment();
                 fruit.active = false;
             }
 
@@ -224,51 +231,93 @@ void UpdateGame(void)
     }
 }
 
-// Draw game (one frame)
-void DrawGame(void)
+static void AddSegment(void)
 {
+    SnakeNode *current = snakeHead;
+    while (current->next != NULL)
+    {
+        current = current->next;
+    }
+
+    SnakeNode *newSegment = (SnakeNode *)malloc(sizeof(SnakeNode));
+    newSegment->segment.position = current->segment.position;
+    newSegment->segment.size = (Vector2){SQUARE_SIZE, SQUARE_SIZE};
+    newSegment->segment.speed = (Vector2){0, 0};
+    newSegment->segment.sprite = LoadTexture("C:\\Users\\Mitillo\\Universidad\\4to. Semestre\\P.P\\Practica1\\cualquier\\texturas\\snake-body.png");
+    newSegment->next = NULL;
+
+    current->next = newSegment;
+    counterTail++;
+}
+
+static void FreeSnake(void)
+{
+    SnakeNode *current = snakeHead;
+    SnakeNode *next;
+    while (current != NULL)
+    {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+    snakeHead = NULL;
+}
+
+static void DrawGame(Music defeat, Sound eat, Music music)
+{
+    Rectangle frameRec = {0.0f, 0.0f, (float)SQUARE_SIZE, (float)SQUARE_SIZE};
     BeginDrawing();
 
     ClearBackground(RAYWHITE);
 
     if (!gameOver)
     {
-        // Draw grid lines
-        for (int i = 0; i < screenWidth / SQUARE_SIZE + 1; i++)
+        UpdateMusicStream(music);
+
+        for (int i = 0; i < SCREEN_WIDTH / SQUARE_SIZE + 1; i++)
         {
-            DrawLineV((Vector2){SQUARE_SIZE * i + offset.x / 2, offset.y / 2}, (Vector2){SQUARE_SIZE * i + offset.x / 2, screenHeight - offset.y / 2}, LIGHTGRAY);
+            DrawLineV((Vector2){SQUARE_SIZE * i + offset.x / 2, offset.y / 2},
+                      (Vector2){SQUARE_SIZE * i + offset.x / 2, SCREEN_HEIGHT - offset.y / 2}, LIGHTGRAY);
         }
 
-        for (int i = 0; i < screenHeight / SQUARE_SIZE + 1; i++)
+        for (int i = 0; i < SCREEN_HEIGHT / SQUARE_SIZE + 1; i++)
         {
-            DrawLineV((Vector2){offset.x / 2, SQUARE_SIZE * i + offset.y / 2}, (Vector2){screenWidth - offset.x / 2, SQUARE_SIZE * i + offset.y / 2}, LIGHTGRAY);
+            DrawLineV((Vector2){offset.x / 2, SQUARE_SIZE * i + offset.y / 2},
+                      (Vector2){SCREEN_WIDTH - offset.x / 2, SQUARE_SIZE * i + offset.y / 2}, LIGHTGRAY);
         }
 
-        // Draw snake
-        for (int i = 0; i < counterTail; i++)
-            DrawRectangleV(snake[i].position, snake[i].size, snake[i].color);
+        SnakeNode *current = snakeHead;
+        while (current != NULL)
+        {
+            DrawTextureRec(current->segment.sprite, frameRec, Vector2{current->segment.position.x, current->segment.position.y}, RAYWHITE);
+            current = current->next;
+        }
 
-        // Draw fruit to pick
-        DrawRectangleV(fruit.position, fruit.size, fruit.color);
+        DrawTextureRec(fruit.sprite, frameRec, Vector2{fruit.position.x, fruit.position.y}, RAYWHITE);
 
         if (pause)
-            DrawText("JUEGO PAUSADO", screenWidth / 2 - MeasureText("JUEGO PAUSADO", 40) / 2, screenHeight / 2 - 40, 40, GRAY);
+        {
+            DrawText("GAME PAUSED", SCREEN_WIDTH / 2 - MeasureText("GAME PAUSED", 40) / 2, SCREEN_HEIGHT / 2 - 40, 40, GRAY);
+        }
     }
     else
-        DrawText("PRESIONE [ENTER] PARA JUGAR DE NUEVO", GetScreenWidth() / 2 - MeasureText("PRESIONE [ENTER] PARA JUGAR DE NUEVO", 20) / 2, GetScreenHeight() / 2 - 50, 20, GRAY);
+    {
+
+        UpdateMusicStream(defeat);
+        DrawText("PRESS [ENTER] TO PLAY AGAIN", SCREEN_WIDTH / 2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, GRAY);
+    }
 
     EndDrawing();
 }
 
-// Unload game variables
-void UnloadGame(void)
+static void UnloadGame(void)
 {
-    // TODO: Unload all dynamic loaded data (textures, sounds, models...)
+    FreeSnake();
 }
 
-// Update and Draw (one frame)
-void UpdateDrawFrame(void)
+static void UpdateDrawFrame(Music defeat, Sound eat, Music music)
 {
-    UpdateGame();
-    DrawGame();
+
+    UpdateGame(eat);
+    DrawGame(defeat, eat, music);
 }

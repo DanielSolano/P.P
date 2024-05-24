@@ -1,5 +1,7 @@
 #include "raylib.h"
-#include <iostream>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define SQUARE_SIZE 31
 
@@ -27,9 +29,9 @@ typedef struct Food
 
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
-//------------------------------------------------------------------------------------
-static const int SCREEN_WIDTH = 1600;
-static const int SCREEN_HEIGHT = 900;
+//---------------------------------------------------------------------------------0---
+static const int SCREEN_WIDTH = 800;
+static const int SCREEN_HEIGHT = 450;
 
 static int framesCounter = 0;
 static bool gameOver = false;
@@ -40,14 +42,18 @@ static SnakeNode *snakeHead = NULL;
 static Vector2 offset = {0};
 static int counterTail = 0;
 
+static bool startScreen = true;
+static int startDelay = 210;
+
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
 static void InitGame(void);
 static void UpdateGame(Sound eat, Sound defeat);
 static void DrawGame(Sound defeat, Sound eat, Music music);
+static void DrawStartScreen(void);
 static void UnloadGame(void);
-static void UpdateDrawFrame(Sound defeat, Sound eat, Music music);
+static void UpdateDrawFrame(Sound defeat, Sound eat, Music music, Music iniciar);
 static void AddSegment(void);
 static void FreeSnake(void);
 
@@ -57,14 +63,17 @@ int main(void)
 
     InitAudioDevice();
 
+    Music iniciar = LoadMusicStream("..\\sonidos\\iniciar.mp3");
     Sound defeat = LoadSound("..\\sonidos\\derrota.mp3");
     Sound eat = LoadSound("..\\sonidos\\comer.mp3");
     Music music = LoadMusicStream("..\\sonidos\\musica.mp3");
 
     SetSoundVolume(defeat, 0.1f);
     SetSoundVolume(eat, 0.1f);
-    SetMusicVolume(music, 0.05f);
+    SetMusicVolume(music, .75f);
+    SetMusicVolume(iniciar, .75f);
 
+    PlayMusicStream(iniciar);
     PlayMusicStream(music);
 
     InitGame();
@@ -73,7 +82,7 @@ int main(void)
 
     while (!WindowShouldClose())
     {
-        UpdateDrawFrame(defeat, eat, music);
+        UpdateDrawFrame(defeat, eat, music, iniciar);
     }
 
     UnloadSound(defeat);
@@ -204,7 +213,7 @@ static void UpdateGame(Sound eat, Sound defeat)
             }
 
             framesCounter++;
-            if(gameOver)
+            if (gameOver)
             {
                 PlaySound(defeat);
             }
@@ -212,9 +221,8 @@ static void UpdateGame(Sound eat, Sound defeat)
     }
     else
     {
-        
         if (IsKeyPressed(KEY_ENTER))
-        {   
+        {
             StopSound(defeat);
             InitGame();
             gameOver = false;
@@ -247,6 +255,7 @@ static void FreeSnake(void)
     SnakeNode *next;
     while (current != NULL)
     {
+        UnloadTexture(current->segment.sprite); // Unload the texture of each segment
         next = current->next;
         free(current);
         current = next;
@@ -256,10 +265,11 @@ static void FreeSnake(void)
 
 static void DrawGame(Sound defeat, Sound eat, Music music)
 {
+    char counterText[20];
     Rectangle frameRec = {0.0f, 0.0f, (float)SQUARE_SIZE, (float)SQUARE_SIZE};
     BeginDrawing();
 
-    ClearBackground(WHITE);
+    ClearBackground(SKYBLUE);
 
     if (!gameOver)
     {
@@ -268,13 +278,13 @@ static void DrawGame(Sound defeat, Sound eat, Music music)
         for (int i = 0; i < SCREEN_WIDTH / SQUARE_SIZE + 1; i++)
         {
             DrawLineV((Vector2){SQUARE_SIZE * i + offset.x / 2, offset.y / 2},
-                      (Vector2){SQUARE_SIZE * i + offset.x / 2, SCREEN_HEIGHT - offset.y / 2}, LIGHTGRAY);
+                      (Vector2){SQUARE_SIZE * i + offset.x / 2, SCREEN_HEIGHT - offset.y / 2}, DARKGRAY);
         }
 
         for (int i = 0; i < SCREEN_HEIGHT / SQUARE_SIZE + 1; i++)
         {
             DrawLineV((Vector2){offset.x / 2, SQUARE_SIZE * i + offset.y / 2},
-                      (Vector2){SCREEN_WIDTH - offset.x / 2, SQUARE_SIZE * i + offset.y / 2}, LIGHTGRAY);
+                      (Vector2){SCREEN_WIDTH - offset.x / 2, SQUARE_SIZE * i + offset.y / 2}, DARKGRAY);
         }
 
         SnakeNode *current = snakeHead;
@@ -285,28 +295,66 @@ static void DrawGame(Sound defeat, Sound eat, Music music)
         }
 
         DrawTextureRec(fruit.sprite, frameRec, Vector2{fruit.position.x, fruit.position.y}, RAYWHITE);
-
+        sprintf(counterText, "PUNTUACION: %d", counterTail - 1);
+        DrawText(counterText, 20, 430, 10, BLACK);
         if (pause)
         {
-            DrawText("PAUSA", SCREEN_WIDTH / 2 - MeasureText("PAUSA", 40) / 2, SCREEN_HEIGHT / 2 - 40, 40, GRAY);
+            DrawText("PAUSA", SCREEN_WIDTH / 2 - MeasureText("PAUSA", 40) / 2, SCREEN_HEIGHT / 2 - 40, 40, BLACK);
+        }
+        else
+        {
+            DrawText("PAUSA [P] ", 720, 430, 10, BLACK);
+            DrawText("SALIR [ESC] ", 720, 415, 10, BLACK);
         }
     }
     else
     {
-        DrawText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", SCREEN_WIDTH / 2 - MeasureText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, GRAY);
+        DrawText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", SCREEN_WIDTH / 2 - MeasureText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, BLACK);
     }
 
+    EndDrawing();
+}
+
+static void DrawStartScreen(void)
+{
+    BeginDrawing();
+    ClearBackground(SKYBLUE);
+    DrawText("PRESIONA [ENTER] PARA INICIAR", SCREEN_WIDTH / 2 - MeasureText("PRESIONA [ENTER] PARA INICIAR", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, BLACK);
     EndDrawing();
 }
 
 static void UnloadGame(void)
 {
     FreeSnake();
+    UnloadTexture(fruit.sprite); // Unload the fruit texture
 }
 
-static void UpdateDrawFrame(Sound defeat, Sound eat, Music music)
+static void UpdateDrawFrame(Sound defeat, Sound eat, Music music, Music iniciar)
 {
-
-    UpdateGame(eat, defeat);
-    DrawGame(defeat, eat, music);
+    if (startScreen)
+    {
+        if (IsKeyPressed(KEY_ENTER))
+        {
+            startScreen = false;
+            framesCounter = 0;
+        }
+        else
+        {
+            DrawStartScreen();
+        }
+    }
+    else if (framesCounter < startDelay)
+    {
+        framesCounter++;
+        UpdateMusicStream(iniciar);
+        BeginDrawing();
+        ClearBackground(SKYBLUE);
+        DrawText("INICIANDO...", SCREEN_WIDTH / 2 - MeasureText("INICIANDO...", 20) / 2, SCREEN_HEIGHT / 2 - 10, 20, BLACK);
+        EndDrawing();
+    }
+    else
+    {
+        UpdateGame(eat, defeat);
+        DrawGame(defeat, eat, music);
+    }
 }

@@ -1,14 +1,8 @@
 #include "raylib.h"
 #include <iostream>
 
-//----------------------------------------------------------------------------------
-// Some Defines
-//----------------------------------------------------------------------------------
 #define SQUARE_SIZE 31
 
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
 typedef struct SnakeSegment
 {
     Vector2 position;
@@ -34,8 +28,8 @@ typedef struct Food
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static const int SCREEN_WIDTH = 800;
-static const int SCREEN_HEIGHT = 450;
+static const int SCREEN_WIDTH = 1600;
+static const int SCREEN_HEIGHT = 900;
 
 static int framesCounter = 0;
 static bool gameOver = false;
@@ -50,32 +44,27 @@ static int counterTail = 0;
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
 static void InitGame(void);
-static void UpdateGame(Sound eat);
-static void DrawGame(Music defeat, Sound eat, Music music);
+static void UpdateGame(Sound eat, Sound defeat);
+static void DrawGame(Sound defeat, Sound eat, Music music);
 static void UnloadGame(void);
-static void UpdateDrawFrame(Music defeat, Sound eat, Music music);
+static void UpdateDrawFrame(Sound defeat, Sound eat, Music music);
 static void AddSegment(void);
 static void FreeSnake(void);
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
 int main(void)
 {
-
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Culebrita");
 
     InitAudioDevice();
 
-    Music defeat = LoadMusicStream("..\\sonidos\\derrota.mp3");
+    Sound defeat = LoadSound("..\\sonidos\\derrota.mp3");
     Sound eat = LoadSound("..\\sonidos\\comer.mp3");
-    Music music = LoadMusicStream("..\\sonidos\\musica_snake.mp3");
-    
-    SetMusicVolume(defeat, 0.1f);
-    SetSoundVolume(eat, 0.5f);
+    Music music = LoadMusicStream("..\\sonidos\\musica.mp3");
+
+    SetSoundVolume(defeat, 0.1f);
+    SetSoundVolume(eat, 0.1f);
     SetMusicVolume(music, 0.05f);
 
-    PlayMusicStream(defeat);
     PlayMusicStream(music);
 
     InitGame();
@@ -87,17 +76,13 @@ int main(void)
         UpdateDrawFrame(defeat, eat, music);
     }
 
-
-    UnloadMusicStream(defeat);
+    UnloadSound(defeat);
     UnloadGame();
     CloseWindow();
 
     return 0;
 }
 
-//------------------------------------------------------------------------------------
-// Module Functions Definitions (local)
-//------------------------------------------------------------------------------------
 static void InitGame(void)
 {
     framesCounter = 0;
@@ -123,7 +108,7 @@ static void InitGame(void)
     AddSegment();
 }
 
-static void UpdateGame(Sound eat)
+static void UpdateGame(Sound eat, Sound defeat)
 {
     if (!gameOver)
     {
@@ -219,12 +204,18 @@ static void UpdateGame(Sound eat)
             }
 
             framesCounter++;
+            if(gameOver)
+            {
+                PlaySound(defeat);
+            }
         }
     }
     else
     {
+        
         if (IsKeyPressed(KEY_ENTER))
-        {
+        {   
+            StopSound(defeat);
             InitGame();
             gameOver = false;
         }
@@ -263,12 +254,12 @@ static void FreeSnake(void)
     snakeHead = NULL;
 }
 
-static void DrawGame(Music defeat, Sound eat, Music music)
+static void DrawGame(Sound defeat, Sound eat, Music music)
 {
     Rectangle frameRec = {0.0f, 0.0f, (float)SQUARE_SIZE, (float)SQUARE_SIZE};
     BeginDrawing();
 
-    ClearBackground(RAYWHITE);
+    ClearBackground(WHITE);
 
     if (!gameOver)
     {
@@ -297,14 +288,12 @@ static void DrawGame(Music defeat, Sound eat, Music music)
 
         if (pause)
         {
-            DrawText("GAME PAUSED", SCREEN_WIDTH / 2 - MeasureText("GAME PAUSED", 40) / 2, SCREEN_HEIGHT / 2 - 40, 40, GRAY);
+            DrawText("PAUSA", SCREEN_WIDTH / 2 - MeasureText("PAUSA", 40) / 2, SCREEN_HEIGHT / 2 - 40, 40, GRAY);
         }
     }
     else
     {
-
-        UpdateMusicStream(defeat);
-        DrawText("PRESS [ENTER] TO PLAY AGAIN", SCREEN_WIDTH / 2 - MeasureText("PRESS [ENTER] TO PLAY AGAIN", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, GRAY);
+        DrawText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", SCREEN_WIDTH / 2 - MeasureText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, GRAY);
     }
 
     EndDrawing();
@@ -315,9 +304,9 @@ static void UnloadGame(void)
     FreeSnake();
 }
 
-static void UpdateDrawFrame(Music defeat, Sound eat, Music music)
+static void UpdateDrawFrame(Sound defeat, Sound eat, Music music)
 {
 
-    UpdateGame(eat);
+    UpdateGame(eat, defeat);
     DrawGame(defeat, eat, music);
 }

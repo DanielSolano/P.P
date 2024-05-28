@@ -43,27 +43,6 @@ typedef struct Food {
 } Food;
 ```
 
-### Variables Globales
-
-Se declaran las variables globales necesarias para el juego:
-
-```c
-static const int SCREEN_WIDTH = 800;
-static const int SCREEN_HEIGHT = 450;
-
-static int framesCounter = 0;
-static bool gameOver = false;
-static bool pause = false;
-
-static Food fruit = {0};
-static SnakeNode *snakeHead = NULL;
-static Vector2 offset = {0};
-static int counterTail = 0;
-
-static bool startScreen = true;
-static int startDelay = 210;
-```
-
 ### Declaración de Funciones
 
 Se declaran las funciones utilizadas en el juego:

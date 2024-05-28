@@ -309,6 +309,7 @@ static void DrawGame(Sound defeat, Sound eat, Music music)
     }
     else
     {
+        DrawText("CULEBRITA", SCREEN_WIDTH / 2 - MeasureText("CULEBRITA", 30) / 2, SCREEN_HEIGHT / 2 - 90, 30, RED);
         DrawText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", SCREEN_WIDTH / 2 - MeasureText("PRESIONA [ENTER] PARA JUGAR DE NUEVO", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, BLACK);
     }
 
@@ -319,6 +320,7 @@ static void DrawStartScreen(void)
 {
     BeginDrawing();
     ClearBackground(SKYBLUE);
+    DrawText("CULEBRITA", SCREEN_WIDTH / 2 - MeasureText("CULEBRITA", 30) / 2, SCREEN_HEIGHT / 2 - 90, 30, RED);
     DrawText("PRESIONA [ENTER] PARA INICIAR", SCREEN_WIDTH / 2 - MeasureText("PRESIONA [ENTER] PARA INICIAR", 20) / 2, SCREEN_HEIGHT / 2 - 50, 20, BLACK);
     EndDrawing();
 }

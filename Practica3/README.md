@@ -8,6 +8,7 @@
 ## Introducción
 Este reporte detalla el contenido de 10 archivos `.sml` en el repositorio, siguiendo la guía de [SML Tour](https://saityi.github.io/sml-tour/tour/welcome).
 
+## Desarrollo
 #### 1. `basic-data-types.sml`
 Este archivo introduce los tipos de datos básicos en SML, como enteros, reales, caracteres, cadenas y booleanos.
 
@@ -165,5 +166,5 @@ end
 - `signature` define una interfaz que especifica qué funciones y tipos debe tener un módulo.
 - `structure` proporciona una implementación concreta para la firma definida.
 
-#### Conclusión
+## Conclusión
 Estos archivos cubren una amplia gama de conceptos en SML, desde tipos de datos básicos hasta módulos avanzados y funtores. Cada archivo proporciona ejemplos prácticos para entender mejor cómo usar estos conceptos en el desarrollo de software.

@@ -166,4 +166,4 @@ end
 - `structure` proporciona una implementación concreta para la firma definida.
 
 #### Conclusión
-Estos archivos cubren una amplia gama de conceptos en SML, desde tipos de datos básicos hasta módulos avanzados y funtores. Cada archivo proporciona ejemplos prácticos para entender mejor cómo usar estos conceptos en el desarrollo de software. Para más detalles, visita el [repositorio](https://github.com/DanielSolano/P.P/tree/main/Practica3).
+Estos archivos cubren una amplia gama de conceptos en SML, desde tipos de datos básicos hasta módulos avanzados y funtores. Cada archivo proporciona ejemplos prácticos para entender mejor cómo usar estos conceptos en el desarrollo de software.

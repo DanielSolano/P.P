@@ -20,6 +20,7 @@
   - [Conjunciones y Disyunciones](#conjunciones-y-disyunciones)
     - [Codigo de ejemplo](#codigo-de-ejemplo-4)
   - [Listas en Prolog](#listas-en-prolog)
+    - [Ejemplo de operaciones con listas:](#ejemplo-de-operaciones-con-listas)
   - [Recursión y Estructuras](#recursión-y-estructuras)
     - [Codigo de ejemplo](#codigo-de-ejemplo-5)
   - [Retroceso (Backtracking)](#retroceso-backtracking)
@@ -205,7 +206,9 @@ puede_votar(Persona) :-
 ```
 
 ## Listas en Prolog
-Las listas son una estructura de datos fundamental en Prolog. Se utilizan para almacenar secuencias de elementos y se manipulan mediante coincidencia de patrones y recursión. Ejemplo de operaciones con listas:
+Las listas son una estructura de datos fundamental en Prolog. Se utilizan para almacenar secuencias de elementos y se manipulan mediante coincidencia de patrones y recursión. 
+
+### Ejemplo de operaciones con listas:
 ```prolog
 miembro(X, [X|_]).
 miembro(X, [_|Resto]) :- miembro(X, Resto).

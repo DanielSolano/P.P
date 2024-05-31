@@ -1,4 +1,9 @@
-# Reporte del Código del Juego "Culebrita"
+# Reporte Culebrita
+
+**Alumno:** Solano Meza Angel Daniel
+
+
+**Clase:** Paradigmas de Programación
 
 ## Introducción
 Este documento describe de manera general el código del juego "Culebrita", una versión del clásico juego de la serpiente implementado en C utilizando la biblioteca gráfica `raylib`. El objetivo del juego es mover una serpiente por la pantalla para comer frutas y crecer, evitando colisionar con los bordes de la pantalla o consigo misma.

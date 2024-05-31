@@ -2,7 +2,10 @@
 ---
 
 # Sistema Bancario en Python
+**Alumno:** Solano Meza Angel Daniel
 
+
+**Clase:** Paradigmas de Programación
 ## Descripción General
 
 El sistema bancario implementado en Python permite la gestión de usuarios y sus cuentas bancarias. Incluye funcionalidades para registrar usuarios, iniciar sesión, realizar depósitos, retiros y transferencias de dinero. Además, el sistema demuestra el uso de conceptos de programación orientada a objetos como clases, objetos, abstracción de datos, encapsulamiento, herencia y polimorfismo.

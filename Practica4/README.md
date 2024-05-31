@@ -20,8 +20,8 @@
   - [Conjunciones y Disyunciones](#conjunciones-y-disyunciones)
     - [Codigo de ejemplo](#codigo-de-ejemplo-4)
   - [Listas en Prolog](#listas-en-prolog)
+  - [Recursión y Estructuras](#recursión-y-estructuras)
     - [Codigo de ejemplo](#codigo-de-ejemplo-5)
-    - [Codigo de ejemplo](#codigo-de-ejemplo-6)
   - [Retroceso (Backtracking)](#retroceso-backtracking)
     - [Ejemplo de Retroceso](#ejemplo-de-retroceso)
   - [Diferente y No](#diferente-y-no)
@@ -47,6 +47,7 @@ write('Hello World').
 Este comando se puede ejecutar directamente en la consola de Prolog o guardar en un archivo con la extensión `.pl` y ejecutar desde la consola cargando el .
 
 ## Conceptos Básicos de Prolog
+
 ### Hechos, Reglas y Consultas
 - **Hechos**: Declaraciones que siempre son verdaderas, como `gato(tom).` que indica que Tom es un gato.
 - **Reglas**: Declaraciones condicionales que derivan nuevos hechos. Por ejemplo:
@@ -213,10 +214,6 @@ concatenar([], L, L).
 concatenar([X|L1], L2, [X|L3]) :-
     concatenar(L1, L2, L3).
 ```
-
-### Codigo de ejemplo
-```prolog
-
 
 ## Recursión y Estructuras
 La recursión es una técnica esencial en Prolog para definir relaciones repetitivas y estructurales. Se utiliza comúnmente para procesar listas, definir árboles y otras estructuras de datos complejas. Un ejemplo clásico es el cálculo del factorial:

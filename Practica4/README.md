@@ -1,7 +1,11 @@
-# Informe del Tutorial de Prolog
+# Paradigma Logico - Prolog
+**Alumno:** Solano Meza Angel Daniel
+
+
+**Clase:** Paradigmas de Programación
 
 ## Tabla de Contenidos
-- [Informe del Tutorial de Prolog](#informe-del-tutorial-de-prolog)
+- [Paradigma Logico - Prolog](#paradigma-logico---prolog)
   - [Tabla de Contenidos](#tabla-de-contenidos)
   - [Introducción a Prolog](#introducción-a-prolog)
   - [Configuración del Entorno](#configuración-del-entorno)
